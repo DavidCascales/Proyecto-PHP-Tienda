@@ -1,20 +1,47 @@
 <?php
+
+include("../config/Database.php");
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $errores = [];
+    $erroresflag = false;
 
-    if (strlen($_POST["contraseña"]) >= 6) {
+    if (!(strlen($_POST["contraseña"]) >= 6)) {
+        $erroresflag=true;
+        array_push($errores, "<p style='color: red;'> La contraseña tiene que ser minimo de 6 caracteres <p>");
 
-
-        //header("Location:Bienvenida.php?nombre=" . $_POST["usuario"]);
-    } else {
-       array_push($errores, "<p style='color: red;'> La contraseña tiene que ser minimo de 6 caracteres <p>");
+        
     }
 
-    if (strlen($_POST["usuario"])!=0) {
-        # ir a la tienda
-    } else {
-        array_push($errores, "<p style='color: red;'> El nombre no debe de estar vacio<p>");
+    if (!$erroresflag) {
+        // Comprobar la conexión
+        if ($conn->connect_error) {
+            die("Conexión fallida: " . $conn->connect_error);
+        }
+        $encontrado=false;
+        // Consulta SQL para seleccionar todos los empleados
+        $sql = "SELECT email, contraseña, nombre, apellidos, Telefono,Calle FROM usuario";
+
+        // Ejecutar la consulta
+        $result = $conn->query($sql);
+
+        // Comprobar si hay resultados
+        if ($result->num_rows > 0) {
+            // Imprimir los datos de cada fila
+            while ($row = $result->fetch_assoc()) { //Obtiene cada fila como un array asociativo
+                if ($row["email"]==$_POST["mail"] && $row["contraseña"]==$_POST["contraseña"]) {
+                    $encontrado=true;
+                    header("Location:tienda.php?nombre=".$row["nombre"]);
+                }
+            }
+        } else {
+            echo "No se encontraron resultados.";
+        }
+
+        if (!$encontrado) {
+            array_push($errores, "<p style='color: red;'> No se ha encontrado el usuario indicado<p>");
+        }
 
     }
 
@@ -44,12 +71,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <div class="contenedor">
         <h1>Inicio Sesión</h1>
-       
+
 
         <form action="<?php echo ($_SERVER["PHP_SELF"]) ?>" method="POST">
 
-            <label for="Usuario">Usuario</label>
-            <input name="usuario" type="text" required>
 
             <label for="Mail">Mail</label>
             <input name="mail" type="email" required>
