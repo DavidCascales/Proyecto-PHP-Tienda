@@ -9,8 +9,10 @@ require '../config/PHPMail/Exception.php';
 require '../config/PHPMail/PHPMailer.php';
 require '../config/PHPMail/SMTP.php';
 
-//Create an instance; passing `true` enables exceptions
-$mail = new PHPMailer(true);
+include '../config/PHPmail/Testmail.php';
+include '../config/database.php';
+
+
 
 
 
@@ -20,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $errores = [];
     $erroresflag = false;
 
-    
+
 
 
 
@@ -31,7 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     }
 
-    if (strlen($_POST["usuario"]) == 0) {
+    if (strlen($_POST["nombre"]) == 0) {
         $erroresflag = true;
         array_push($errores, "<p style='color: red;'> El nombre no debe de estar vacio<p>");
     }
@@ -51,10 +53,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         array_push($errores, "<p style='color: red;'> Se debe elegir un rol<p>");
     }
 
-    function validarCorreo($correo) {
+    function validarCorreo($correo)
+    {
         // Eliminar espacios en blanco al inicio y al final
         $correo = trim($correo);
-        
+
         // Verificar si el correo es válido usando filter_var
         if (filter_var($correo, FILTER_VALIDATE_EMAIL)) {
             return true; // El correo es válido
@@ -65,12 +68,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
 
-    if(!validarCorreo($_POST["mail"])){
+    if (!validarCorreo($_POST["mail"])) {
         $erroresflag = true;
         array_push($errores, "<p style='color: red;'> El correo no tiene el formato correcto<p>");
     }
 
-    function validarDNI($dni) {
+    function validarDNI($dni)
+    {
         // Comprobar que el formato es correcto (8 dígitos seguidos de una letra)
         return preg_match('/^\d{8}[A-Z]$/', $dni) === 1;
     }
@@ -79,46 +83,113 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $erroresflag = true;
         array_push($errores, "<p style='color: red;'> El dni no tiene el formato correcto<p>");
 
-    } 
+    }
 
 
     if (!$erroresflag) {
-        $mensaje = "usuario" . $_POST["mail"]."creado con éxito";
 
-        echo "<script type='text/javascript'>alert('$mensaje');</script>";
+
+        $usuarioExiste = false;
+        $email = $conn->real_escape_string($_POST['mail']);
+
+        // Consulta SQL para seleccionar todos los empleados
+        $sql = "SELECT count(*) as usuarioExistente FROM usuario where usuario.Email='$email';";
+
+        // Ejecutar la consulta
+        $result = $conn->query($sql);
+
+        // Comprobar si hay resultados
+        if ($result) {
+
+            $usuarioExiste = true;
+
+        }
+
+
+        if (!$usuarioExiste) {
+
+
+
+            // Preparar la consulta SQL con sentencias preparadas
+            $stmt = $conn->prepare("INSERT INTO usuario (Email, Contraseña, Nombre, Apellidos,Telefono,Calle,Rol,Dni) VALUES (?, ?, ?, ?,?,?,?,?)");
+
+            // Comprobar si la preparación fue exitosa
+            if ($stmt === false) {
+                die("Error en la preparación de la consulta: " . $conn->error);
+            }
+
+            // Vincular parámetros
+            // "ssss" indica que se esperan 4 Strings
+            // "i" es para enteros, "d" para decimales, "b" para BLOBs,
+            $stmt->bind_param("ssssssss", $email, $contraseña, $nombre, $apellidos, $telefono, $calle, $rol, $dni);
+
+            // Ejecutar múltiples inserciones
+
+            // Asignar valores a las variables
+            $email = $_POST["mail"];
+            $contraseña = $_POST["contraseña"];
+            $nombre = $_POST["nombre"];
+            $apellidos = $_POST["apellido"];
+            $telefono = $_POST["telefono"];
+            $calle = $_POST["calle"];
+            $rol = $_POST["rol"];
+            $dni = $_POST["dni"];
+
+            $mensaje = "usuario" . $_POST["mail"] . "creado con éxito";
+
+            try {
+                // Ejecutar la consulta
+                $stmt->execute();
+
+                echo "<script type='text/javascript'>
+                    alert('$mensaje');
+                    window.location.href = 'login.php'; // Redirigir después de mostrar el alert
+                    </script>";
+
+
+            } catch (mysqli_sql_exception $e) {
+                // Capturar la excepción
+                $mensaje = "Error al insertar el usuario " . $_POST["mail"];
+
+                echo "<script type='text/javascript'>alert('$mensaje');</script>";
+                // Aquí puedes optar por redirigir a otra página o simplemente mostrar el mensaje
+            }
+
+            // Cerrar la sentencia y la conexión
+            $stmt->close();
+
+
+        } else {
+
+            $mensaje = "Error el usuario ya esta registrado en el sistema";
+            echo "<script type='text/javascript'>alert('$mensaje');</script>";
+        }
+
+        /*$mailerConfig = new TestMail('../config/PHPMail/mail.properties');
+        $mailConfig = $mailerConfig->smtpConfig;
+
+        //Create an instance; passing `true` enables exceptions
+        $mail = new PHPMailer(true);
 
         try {
-            //Server settings
-            $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      //Enable verbose debug output
-            $mail->isSMTP();                                            //Send using SMTP
-            $mail->Host = 'smtp-relay.gmail.com';                     //Set the SMTP server to send through
-            $mail->SMTPAuth = true;                                   //Enable SMTP authentication
-            $mail->Username = 'david.cascales@iesdoctorbalmis.com';                     //SMTP username
-            $mail->Password = '123a-123b';                               //SMTP password
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;            //Enable implicit TLS encryption
-            $mail->Port = 465;                                    //TCP port to connect to; use 587 if you have set `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`
-    
-            //Recipients
-            $mail->setFrom('david.cascales@iesdoctorbalmis.com', 'David');    //Add a recipient
-    
-    
+
             $mail->addAddress($_POST["mail"]);               //Name is optional
-         
-        
-    
+            $mail->isSMTP();
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+
             //Content
             $mail->isHTML(true);                                  //Set email format to HTML
             $mail->Subject = 'Creación de usuario';
             $mail->Body = '<html><h1>usuario creado con exito</h1></html>';
             $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
-            
-            
+
+
             $mail->send();
             header("Location:login.php");
-          
+
         } catch (Exception $e) {
             echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
-        }
+        }*/
 
     }
 
@@ -145,14 +216,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     }
     ?>
-
+    <div>
+        <a href="login.php" style="text-decoration: none;">
+            <button style="background-color: #e54242;color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100px;
+    height: 80px;">
+                <p>Volver al login</p>
+            </button>
+        </a>
+    </div>
     <div class="contenedor">
         <h1>Registro</h1>
 
         <form action="<?php echo ($_SERVER["PHP_SELF"]) ?>" method="POST">
 
             <label for="Usuario">Usuario</label>
-            <input name="usuario" type="text" required>
+            <input name="nombre" type="text" required>
 
             <label for="Mail">Mail</label>
             <input name="mail" type="email" required>
@@ -164,10 +247,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <input name="apellido" type="text" required>
 
             <label for="Telefono">Telefono</label>
-            <input name="telefono" type="tel" >
+            <input name="telefono" type="tel">
 
             <label for="Calle">Calle</label>
-            <input name="calle" type="text" >
+            <input name="calle" type="text">
 
             <label for="Rol">Rol</label>
             <select name="rol" required>
