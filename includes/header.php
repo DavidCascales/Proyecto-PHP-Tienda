@@ -1,5 +1,5 @@
 <?php
 echo '<header>
-<h1>Formulario Login</h1>
+<h1>Tienda Ropa</h1>
 </header>';
 ?>
