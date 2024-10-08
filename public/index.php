@@ -3,25 +3,33 @@ include("../includes/header.php");
 include("../includes/navbar.php");
 include("../config/Database.php");
 
+if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
+    session_start();
+    if (!isset($_SESSION['id_Usuario'])) {
+        header('Location: login.php');
+    } else {
+        // Realizar la consulta
+        $sql = "SELECT * FROM Articulo"; // Cambia "tu_tabla" según tu necesidad
+        $result = $conn->query($sql);
 
-// Realizar la consulta
-$sql = "SELECT * FROM Articulo"; // Cambia "tu_tabla" según tu necesidad
-$result = $conn->query($sql);
+        // Inicializar el array para almacenar los resultados
+        $arrayResultados = [];
 
-// Inicializar el array para almacenar los resultados
-$arrayResultados = [];
+        if ($result->num_rows > 0) {
+            // Volcar los resultados en el array
+            while ($row = $result->fetch_assoc()) {
+                $arrayResultados[] = $row; // Agrega cada fila al array
+            }
+        } else {
+            echo "0 resultados";
+        }
 
-if ($result->num_rows > 0) {
-    // Volcar los resultados en el array
-    while ($row = $result->fetch_assoc()) {
-        $arrayResultados[] = $row; // Agrega cada fila al array
+        $conn->close();
     }
-} else {
-    echo "0 resultados";
 }
 
-$conn->close();
+
 
 ?>
 <!DOCTYPE html>

@@ -21,7 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         $encontrado=false;
         // Consulta SQL para seleccionar todos los empleados
-        $sql = "SELECT email, contraseña, nombre, apellidos, Telefono,Calle FROM usuario";
+        $sql = "SELECT ID_usuario,email, contraseña, nombre, apellidos, Telefono,Calle,rol FROM usuario";
 
         // Ejecutar la consulta
         $result = $conn->query($sql);
@@ -32,7 +32,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             while ($row = $result->fetch_assoc()) { //Obtiene cada fila como un array asociativo
                 if ($row["email"]==$_POST["mail"] && $row["contraseña"]==$_POST["contraseña"]) {
                     $encontrado=true;
-                    header("Location:tienda.php?nombre=".$row["nombre"]);
+                    session_start();
+                    $_SESSION['id_Usuario'] = $row['ID_usuario'];
+                    $_SESSION['rol'] = $row["rol"];
+                    header("Location:index.php?nombre=".$row["nombre"]);
                 }
             }
         } else {

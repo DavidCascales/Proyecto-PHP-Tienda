@@ -8,10 +8,10 @@ use PHPMailer\PHPMailer\Exception;
 require '../config/PHPMail/Exception.php';
 require '../config/PHPMail/PHPMailer.php';
 require '../config/PHPMail/SMTP.php';
+/*
+include '../config/PHPmail/Testmail.php';*/
 
-include '../config/PHPmail/Testmail.php';
 include '../config/database.php';
-
 
 
 
@@ -24,12 +24,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
 
-
-
     if (!(strlen($_POST["contraseña"]) >= 6)) {
         $erroresflag = true;
         array_push($errores, "<p style='color: red;'> La contraseña tiene que ser minimo de 6 caracteres <p>");
-
 
     }
 
@@ -48,10 +45,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         array_push($errores, "<p style='color: red;'> El dni no debe de estar vacio<p>");
     }
 
-    if (strlen($_POST["rol"]) == 0) {
-        $erroresflag = true;
-        array_push($errores, "<p style='color: red;'> Se debe elegir un rol<p>");
-    }
 
     function validarCorreo($correo)
     {
@@ -90,6 +83,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
         $usuarioExiste = false;
+
         $email = $conn->real_escape_string($_POST['mail']);
 
         // Consulta SQL para seleccionar todos los empleados
@@ -100,8 +94,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Comprobar si hay resultados
         if ($result) {
+            $row = $result->fetch_assoc();
+            if ($row['usuarioExistente'] != 0) {
+                $usuarioExiste = true;
+            }
 
-            $usuarioExiste = true;
 
         }
 
@@ -111,7 +108,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
             // Preparar la consulta SQL con sentencias preparadas
-            $stmt = $conn->prepare("INSERT INTO usuario (Email, Contraseña, Nombre, Apellidos,Telefono,Calle,Rol,Dni) VALUES (?, ?, ?, ?,?,?,?,?)");
+            $stmt = $conn->prepare("INSERT INTO usuario (Email, Contraseña, Nombre, Apellidos,Telefono,Calle,Dni) VALUES ( ?, ?, ?,?,?,?,?)");
 
             // Comprobar si la preparación fue exitosa
             if ($stmt === false) {
@@ -121,7 +118,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Vincular parámetros
             // "ssss" indica que se esperan 4 Strings
             // "i" es para enteros, "d" para decimales, "b" para BLOBs,
-            $stmt->bind_param("ssssssss", $email, $contraseña, $nombre, $apellidos, $telefono, $calle, $rol, $dni);
+            $stmt->bind_param("sssssss", $email, $contraseña, $nombre, $apellidos, $telefono, $calle, $dni);
 
             // Ejecutar múltiples inserciones
 
@@ -132,7 +129,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $apellidos = $_POST["apellido"];
             $telefono = $_POST["telefono"];
             $calle = $_POST["calle"];
-            $rol = $_POST["rol"];
             $dni = $_POST["dni"];
 
             $mensaje = "usuario" . $_POST["mail"] . "creado con éxito";
@@ -141,10 +137,46 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // Ejecutar la consulta
                 $stmt->execute();
 
-                echo "<script type='text/javascript'>
+                /*$mailerConfig = new TestMail('../config/PHPMail/mail.properties');
+                $mailConfig = $mailerConfig->smtpConfig;*/
+
+                //Create an instance; passing `true` enables exceptions
+                $mail = new PHPMailer(true);
+
+                try {
+                    
+                    
+                    $mail->isSMTP();
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                    $mail->Host = "smtp.gmail.com";
+                    $mail->SMTPAuth = true;
+                    $mail->Port=465;
+                    $mail->Username = "intentoaprobar@gmail.com";
+                    $mail->Password = "jhgl eire jouo oxxs";
+                    $mail->setFrom("intentoaprobar@gmail.com");
+                    $mail->addAddress( $_POST["mail"]);
+                    //Content
+                    $mail->isHTML(true);                                  //Set email format to HTML
+                    $mail->Subject = 'Creación de usuario';
+                    $mail->Body = '<html><h1>usuario creado con exito</h1></html>';
+                    $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+                    
+
+                    $mail->send();
+                    //header("Location:login.php");
+
+                    echo"<script type='text/javascript'>
+                    alert('Correo enviado con exito');
+                    </script>";
+
+                } catch (Exception $e) {
+                    echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
+                }
+
+               /* echo "<script type='text/javascript'>
                     alert('$mensaje');
                     window.location.href = 'login.php'; // Redirigir después de mostrar el alert
-                    </script>";
+                    </script>";*/
 
 
             } catch (mysqli_sql_exception $e) {
@@ -159,37 +191,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->close();
 
 
+
+
+
         } else {
 
             $mensaje = "Error el usuario ya esta registrado en el sistema";
             echo "<script type='text/javascript'>alert('$mensaje');</script>";
         }
 
-        /*$mailerConfig = new TestMail('../config/PHPMail/mail.properties');
-        $mailConfig = $mailerConfig->smtpConfig;
-
-        //Create an instance; passing `true` enables exceptions
-        $mail = new PHPMailer(true);
-
-        try {
-
-            $mail->addAddress($_POST["mail"]);               //Name is optional
-            $mail->isSMTP();
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-
-            //Content
-            $mail->isHTML(true);                                  //Set email format to HTML
-            $mail->Subject = 'Creación de usuario';
-            $mail->Body = '<html><h1>usuario creado con exito</h1></html>';
-            $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
-
-
-            $mail->send();
-            header("Location:login.php");
-
-        } catch (Exception $e) {
-            echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
-        }*/
 
     }
 
@@ -252,11 +262,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <label for="Calle">Calle</label>
             <input name="calle" type="text">
 
-            <label for="Rol">Rol</label>
-            <select name="rol" required>
-                <option value="usuario">Cliente</option>
-                <option value="administrador">Administrador</option>
-            </select>
 
             <label for="Dni">Dni</label>
             <input name="dni" type="text">
