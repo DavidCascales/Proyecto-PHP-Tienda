@@ -1,11 +1,12 @@
 <?php
-include("../includes/header.php");
-include("../includes/navbar.php");
+
+session_start();
+
 include("../config/Database.php");
 
 if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
-    session_start();
+    
     if (!isset($_SESSION['id_Usuario'])) {
         header('Location: login.php');
     } else {
@@ -43,8 +44,11 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 </head>
 
 <body>
-
-    <main>
+    <?php
+    include("../includes/header.php");
+    include("../includes/navbar.php");
+    ?>
+    <main >
         <div id="productos">
             <?php foreach ($arrayResultados as $item): ?>
                 <div class="producto">
@@ -55,28 +59,6 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 </div>
             <?php endforeach; ?>
         </div>
-        <!-- <div class="producto">
-            <img src="../assets/images/bufandaLana.jpg" alt="Camisa de algodón">
-            <h2>Camisa de algodón</h2>
-            <p>Precio: $29.99</p>
-
-        </div>
-        <div class="producto">
-            <img src="pantalon1.jpg" alt="Pantalón chino clásico">
-            <h2>Pantalón chino clásico</h2>
-            <p>Precio: $49.99</p>
-        </div>
-        <div class="producto">
-            <img src="chaqueta1.jpg" alt="Chaqueta de cuero">
-            <h2>Chaqueta de cuero</h2>
-            <p>Precio: $89.99</p>
-        </div> -->
-
-        <!-- <section id="carrito">
-            <h2>Carrito de Compras</h2>
-            <ul id="lista-carrito"></ul>
-            <p id="total">Total: $0.00</p>
-        </section> -->
 
     </main>
 </body>

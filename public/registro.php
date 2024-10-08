@@ -163,20 +163,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     
 
                     $mail->send();
-                    //header("Location:login.php");
-
-                    echo"<script type='text/javascript'>
-                    alert('Correo enviado con exito');
-                    </script>";
+                
 
                 } catch (Exception $e) {
                     echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
                 }
 
-               /* echo "<script type='text/javascript'>
+                echo "<script type='text/javascript'>
                     alert('$mensaje');
                     window.location.href = 'login.php'; // Redirigir después de mostrar el alert
-                    </script>";*/
+                    </script>";
 
 
             } catch (mysqli_sql_exception $e) {
