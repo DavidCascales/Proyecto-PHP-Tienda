@@ -6,7 +6,7 @@ include("../config/Database.php");
 
 if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
-    
+
     if (!isset($_SESSION['id_Usuario'])) {
         header('Location: login.php');
     } else {
@@ -41,6 +41,16 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../assets/css/tienda.css">
     <title>Tienda de Ropa</title>
+    <script>
+        function abrirDetalle(idArticulo) {
+            
+            const url = 'detalles_producto.php?id=' + idArticulo;
+
+         
+            window.open(url, '_blank');
+            
+        }
+    </script>
 </head>
 
 <body>
@@ -48,14 +58,14 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     include("../includes/header.php");
     include("../includes/navbar.php");
     ?>
-    <main >
+    <main>
         <div id="productos">
             <?php foreach ($arrayResultados as $item): ?>
-                <div class="producto">
+                <div class="producto" onclick="abrirDetalle(<?php echo $item['ID_Articulo']; ?>)">
                     <img src=<?php echo htmlspecialchars($item['Imagen']); ?>>
                     <h2><?php echo htmlspecialchars($item['Descripcion']); ?></h2> <!-- Cambia 'nombre' según tu columna -->
                     <p><?php echo htmlspecialchars($item['Precio']); ?>€</p> <!-- Cambia 'descripcion' según tu columna -->
-                    <!-- Agrega más campos según necesites -->
+
                 </div>
             <?php endforeach; ?>
         </div>

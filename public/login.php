@@ -35,7 +35,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     session_start();
                     $_SESSION['id_Usuario'] = $row['ID_usuario'];
                     $_SESSION['rol'] = $row["rol"];
-                    header("Location:index.php?nombre=".$row["nombre"]);
+                    header("Location:index.php");
                 }
             }
         } else {
