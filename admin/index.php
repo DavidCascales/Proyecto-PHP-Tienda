@@ -33,12 +33,63 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="../assets/css/indexAdmin.css">
 </head>
+
 <body>
-<h1>Zona admin de <?php echo ($usuario["Nombre"]) ?></h1>
+<?php include("../includes/headerAdmin.php"); ?>
+    
+    <div class="container">
+       
+
+        <div class="section">
+            <h2>Lista de Artículos</h2>
+            <ul>
+                <?php
+                $result = $conn->query("SELECT * FROM Articulo");
+                while ($row = $result->fetch_assoc()) {
+                    echo "<li>{$row['Descripcion']} - {$row['Precio']} 
+                    <a href='?delete_articulo={$row['ID_Articulo']}'>Eliminar</a></li>";
+                }
+                ?>
+            </ul>
+       
+            <h2>Añadir Artículo</h2>
+            <form method="POST">
+                <input type="text" name="articulo_descripcion" placeholder="Descripción del Artículo" required>
+                <input type="text" name="articulo_imagen" placeholder="URL de la Imagen" required>
+                <input type="number" step="0.01" name="articulo_precio" placeholder="Precio" required>
+                <button type="submit" name="add_articulo">Añadir Artículo</button>
+            </form>
+        </div>
+  
+       
+        <div class="section">
+            <h2>Lista de Categorías</h2>
+            <ul>
+                <?php
+                $result = $conn->query("SELECT * FROM Categoria");
+                while ($row = $result->fetch_assoc()) {
+                    echo "<li>{$row['Descripcion']} 
+                    <a href='?delete_categoria={$row['ID_Categoria']}'>Eliminar</a></li>";
+                }
+                ?>
+            </ul>
+        
+            <h2>Añadir Categoría</h2>
+            <form method="POST">
+                <input type="text" name="categoria_descripcion" placeholder="Descripción de la Categoría" required>
+                <button type="submit" name="add_categoria">Añadir Categoría</button>
+            </form>
+        </div>
+    </div>
+
+    <?php $conn->close(); ?>
 </body>
+
 </html>
