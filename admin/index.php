@@ -25,10 +25,123 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
             exit;
         }
 
-        $stmt->close();
+
+
+
     }
 
+} else {
+
+    // Método para eliminar las asociaciones en articulocategoria
+    function eliminarAsociacionesCategoria($conn, $id_categoria)
+    {
+        $stmt = $conn->prepare("DELETE FROM articulocategoria WHERE ID_Categoria = ?");
+        $stmt->bind_param("i", $id_categoria);
+        return $stmt->execute();
+    }
+
+    // Método para eliminar las asociaciones en articulocategoria
+    function eliminarAsociacionesArticulo($conn, $id_articulo)
+    {
+        $stmt = $conn->prepare("DELETE FROM articulocategoria WHERE ID_Articulo = ?");
+        $stmt->bind_param("i", $id_articulo);
+        return $stmt->execute();
+    }
+
+    // Método para eliminar una categoría
+    function eliminarCategoria($conn, $id_categoria)
+    {
+        $stmt = $conn->prepare("DELETE FROM Categoria WHERE ID_Categoria = ?");
+        $stmt->bind_param("i", $id_categoria);
+        return $stmt->execute();
+    }
+
+    // Método para eliminar un artículo
+    function eliminarArticulo($conn, $id_articulo)
+    {
+        $stmt = $conn->prepare("DELETE FROM Articulo WHERE ID_Articulo = ?");
+        $stmt->bind_param("i", $id_articulo);
+        return $stmt->execute();
+    }
+
+
+    // Manejar la eliminación de categorías
+    if (isset($_POST['delete_categoria'])) {
+        $id_categoria = $_POST['id_categoria'];
+        eliminarAsociacionesCategoria($conn, $id_categoria);
+        if (eliminarCategoria($conn, $id_categoria)) {
+            echo "Categoría eliminada correctamente.";
+        } else {
+            echo "Error al eliminar la categoría.";
+        }
+    }
+
+    // Manejar la eliminación de artículos
+    if (isset($_POST['delete_articulo'])) {
+        $id_articulo = $_POST['id_articulo'];
+        eliminarAsociacionesArticulo($conn, $id_articulo);
+        if (eliminarArticulo($conn, $id_articulo)) {
+            echo "Artículo eliminado correctamente.";
+        } else {
+            echo "Error al eliminar el artículo.";
+        }
+    }
+
+    // Método para añadir una categoría
+    function añadirCategoria($conn, $categoria_descripcion)
+    {
+
+        $stmt = $conn->prepare("INSERT INTO Categoria (Descripcion) VALUES (?)");
+        $stmt->bind_param("s", $categoria_descripcion);
+        return $stmt->execute();
+    }
+    // Método para añadir un artículo
+    function añadirArticulo($conn, $articulo_descripcion, $articulo_imagen, $articulo_precio, $id_categoria)
+    {
+        $imagenRuta="../assets/images/". $articulo_imagen;
+        $stmt = $conn->prepare("INSERT INTO Articulo (Imagen, Descripcion, Precio) VALUES (?,?,?)");
+        $stmt->bind_param("ssd",$imagenRuta, $articulo_descripcion, $articulo_precio);
+
+        if ($stmt->execute()) {
+            // Obtener el ID del artículo recién creado
+            $id_articulo = $conn->insert_id; // Aquí usamos insert_id para obtener el ID directamente
+
+            // Inserta la asociación en articulocategoria
+            $stmt = $conn->prepare("INSERT INTO articulocategoria (ID_Articulo, ID_Categoria) VALUES (?, ?)");
+            $stmt->bind_param("ii", $id_articulo, $id_categoria);
+            return $stmt->execute();
+        }
+        return false;
+    }
+
+    // Manejar añadir artículos
+    if (isset($_POST['add_articulo'])) {
+        $articulo_descripcion = $_POST['articulo_descripcion'];
+        $articulo_imagen = $_POST['articulo_imagen'];
+        $id_categoria = $_POST['id_categoria'];
+        $articulo_precio = $_POST['articulo_precio'];
+
+        if (añadirArticulo($conn, $articulo_descripcion, $articulo_imagen, $articulo_precio, $id_categoria)) {
+            echo "Artículo añadido correctamente.";
+        } else {
+            echo "Error al añadir el artículo.";
+        }
+    }
+    // Manejar añadir categorías
+    if (isset($_POST['add_categoria'])) {
+        $categoria_descripcion = $_POST['categoria_descripcion'];
+        if (añadirCategoria($conn, $categoria_descripcion)) {
+            echo "Categoría añadida correctamente.";
+        } else {
+            echo "Error al añadir la categoría.";
+        }
+    }
+
+
+
+
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -42,45 +155,67 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 </head>
 
 <body>
-<?php include("../includes/headerAdmin.php"); ?>
-    
+    <?php include("../includes/headerAdmin.php");
+    include("../includes/navbar.php"); ?>
+
     <div class="container">
-       
+
 
         <div class="section">
             <h2>Lista de Artículos</h2>
             <ul>
-                <?php
-                $result = $conn->query("SELECT * FROM Articulo");
-                while ($row = $result->fetch_assoc()) {
-                    echo "<li>{$row['Descripcion']} - {$row['Precio']} 
-                    <a href='?delete_articulo={$row['ID_Articulo']}'>Eliminar</a></li>";
-                }
-                ?>
+                <?php $result = $conn->query("SELECT * FROM Articulo");
+                while ($row = $result->fetch_assoc()): ?>
+                    <li>
+                        <?php echo $row['Descripcion'] . " - " . $row['Precio']."€"; ?>
+                        <form action="<?php echo ($_SERVER["PHP_SELF"]) ?>" method="POST" style="display:inline;">
+                            <input type="hidden" name="id_articulo" value="<?php echo $row['ID_Articulo']; ?>">
+                            <button type="submit" name="delete_articulo"
+                                onclick="return confirm('¿Estás seguro de que deseas eliminar este artículo?');">Eliminar</button>
+                        </form>
+                    </li>
+                <?php endwhile; ?>
             </ul>
-       
+
             <h2>Añadir Artículo</h2>
             <form method="POST">
                 <input type="text" name="articulo_descripcion" placeholder="Descripción del Artículo" required>
                 <input type="text" name="articulo_imagen" placeholder="URL de la Imagen" required>
                 <input type="number" step="0.01" name="articulo_precio" placeholder="Precio" required>
+                <label for="categoria">Seleccionar Categoría:</label>
+                <select name="id_categoria" id="categoria" required>
+                    <option value="">Ninguna</option>
+                    <?php
+                    // Obtener categorías de la base de datos
+                    $categorias = $conn->query("SELECT * FROM Categoria");
+                    while ($row = $categorias->fetch_assoc()) {
+                        echo "<option value='{$row['ID_Categoria']}'>{$row['Descripcion']}</option>";
+                    }
+                    ?>
+                </select>
                 <button type="submit" name="add_articulo">Añadir Artículo</button>
             </form>
         </div>
-  
-       
+
+
         <div class="section">
             <h2>Lista de Categorías</h2>
             <ul>
-                <?php
-                $result = $conn->query("SELECT * FROM Categoria");
-                while ($row = $result->fetch_assoc()) {
-                    echo "<li>{$row['Descripcion']} 
-                    <a href='?delete_categoria={$row['ID_Categoria']}'>Eliminar</a></li>";
-                }
-                ?>
+
+                <?php $result = $conn->query("SELECT * FROM Categoria");
+                while ($row = $result->fetch_assoc()): ?>
+                    <li>
+                        <?php echo $row['Descripcion']; ?>
+
+                        <form action="<?php echo ($_SERVER["PHP_SELF"]) ?>" method="POST" style="display:inline;">
+                            <input type="hidden" name="id_categoria" value="<?php echo $row['ID_Categoria']; ?>">
+                            <button type="submit" name="delete_categoria"
+                                onclick="return confirm('¿Estás seguro de que deseas eliminar esta categoría?');">Eliminar</button>
+                        </form>
+                    </li>
+                <?php endwhile; ?>
             </ul>
-        
+
             <h2>Añadir Categoría</h2>
             <form method="POST">
                 <input type="text" name="categoria_descripcion" placeholder="Descripción de la Categoría" required>

@@ -3,7 +3,8 @@
 if ($_SESSION["rol"] == "administrador") {
     echo '<nav>
     <ul>
-        <li><a href="carrito.php">Carrito</a></li>
+        <li><a href="../public/index.php">Tienda</a></li>
+        <li><a href="../public/carrito.php">Carrito</a></li>
         <li><a href="../admin/index.php">Zona Administradores</a></li>
         
     
@@ -12,8 +13,8 @@ if ($_SESSION["rol"] == "administrador") {
 } else {
     echo '<nav>
         <ul>
-            
-            <li><a href="carrito.php">Carrito</a></li>
+            <li><a href="../public/index.php">Carrito</a></li>
+            <li><a href="../public/carrito.php">Carrito</a></li>
         </ul>
     </nav>';
 }

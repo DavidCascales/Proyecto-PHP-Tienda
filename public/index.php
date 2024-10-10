@@ -16,6 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 FROM Articulo
                 LEFT JOIN ArticuloCategoria ON Articulo.ID_Articulo = ArticuloCategoria.ID_Articulo
                 LEFT JOIN Categoria ON ArticuloCategoria.ID_Categoria = Categoria.ID_Categoria;"; // Cambia "tu_tabla" según tu necesidad
+        
         $result = $conn->query($sql);
 
         // Inicializar el array para almacenar los resultados
@@ -68,7 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                     <h2><?php echo htmlspecialchars($item['ArticuloDescripcion']); ?></h2> <!-- Cambia 'nombre' según tu columna -->
                     <p>Categoria: <?php if ($item['CategoriaDescripcion']==null) {
                         echo "Sin categoria";
-                    }  else{echo htmlspecialchars($item['ArticuloDescripcion']);}?></p>
+                    }  else{echo htmlspecialchars($item['CategoriaDescripcion']);}?></p>
                     <p><?php echo htmlspecialchars($item['Precio']); ?>€</p> <!-- Cambia 'descripcion' según tu columna -->
 
                 </div>
