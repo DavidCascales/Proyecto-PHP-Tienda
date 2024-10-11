@@ -98,9 +98,9 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     // Método para añadir un artículo
     function añadirArticulo($conn, $articulo_descripcion, $articulo_imagen, $articulo_precio, $id_categoria)
     {
-        $imagenRuta="../assets/images/". $articulo_imagen;
+        $imagenRuta = "../assets/images/" . $articulo_imagen;
         $stmt = $conn->prepare("INSERT INTO Articulo (Imagen, Descripcion, Precio) VALUES (?,?,?)");
-        $stmt->bind_param("ssd",$imagenRuta, $articulo_descripcion, $articulo_precio);
+        $stmt->bind_param("ssd", $imagenRuta, $articulo_descripcion, $articulo_precio);
 
         if ($stmt->execute()) {
             // Obtener el ID del artículo recién creado
@@ -138,6 +138,19 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     }
 
 
+    // Manejar editar artículos
+    if (isset($_POST['editar_articulo'])) {
+        $id_articulo = $_POST['id_articulo'];
+        header("Location:productoEdit.php?id_articulo=". $id_articulo);
+    }
+
+     // Manejar editar categoria
+     if (isset($_POST['editar_categoria'])) {
+        $id_categoria = $_POST['id_categoria'];
+        header("Location:categoriaEdit.php?id_categoria=". $id_categoria);
+    }
+
+
 
 
 }
@@ -167,9 +180,11 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 <?php $result = $conn->query("SELECT * FROM Articulo");
                 while ($row = $result->fetch_assoc()): ?>
                     <li>
-                        <?php echo $row['Descripcion'] . " - " . $row['Precio']."€"; ?>
+                        <?php echo $row['Descripcion'] . " - " . $row['Precio'] . "€"; ?>
                         <form action="<?php echo ($_SERVER["PHP_SELF"]) ?>" method="POST" style="display:inline;">
                             <input type="hidden" name="id_articulo" value="<?php echo $row['ID_Articulo']; ?>">
+                            <button type="submit" name="editar_articulo"
+                                onclick="return confirm('¿Estás seguro de que deseas editar este artículo?');">Editar</button>
                             <button type="submit" name="delete_articulo"
                                 onclick="return confirm('¿Estás seguro de que deseas eliminar este artículo?');">Eliminar</button>
                         </form>
@@ -209,6 +224,8 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
                         <form action="<?php echo ($_SERVER["PHP_SELF"]) ?>" method="POST" style="display:inline;">
                             <input type="hidden" name="id_categoria" value="<?php echo $row['ID_Categoria']; ?>">
+                            <button type="submit" name="editar_categoria"
+                            onclick="return confirm('¿Estás seguro de que deseas editar esta categoria?');">Editar</button>
                             <button type="submit" name="delete_categoria"
                                 onclick="return confirm('¿Estás seguro de que deseas eliminar esta categoría?');">Eliminar</button>
                         </form>
