@@ -14,13 +14,14 @@ body {
     height: 100vh;
 
 }
-
+/*
 header {
-    background: #35424a;
+     background: #35424a;
     color: #ffffff;
     padding: 10px 0;
-    text-align: center;
-}
+    text-align: center; 
+    background: #35424a; color: #ffffff; padding: 10px 0; position: relative;
+}*/
 
 #productos {
     display: flex;

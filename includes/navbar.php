@@ -13,7 +13,6 @@ if ($_SESSION["rol"] == "administrador") {
 } else {
     echo '<nav>
         <ul>
-            <li><a href="../public/index.php">Carrito</a></li>
             <li><a href="../public/carrito.php">Carrito</a></li>
         </ul>
     </nav>';
