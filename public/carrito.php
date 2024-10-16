@@ -32,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
          FROM Linea_Pedido lp
          JOIN Articulo a ON lp.ID_Articulo = a.ID_Articulo
          JOIN Pedido p ON lp.ID_Pedido = p.ID_Pedido
-         WHERE p.ID_Usuario = ?";
+         WHERE p.ID_Usuario = ? and p.estado = 'Carrito'";
         $stmt_lineas = $conn->prepare($sql_lineas);
         $stmt_lineas->bind_param("i", $id_usuario);
         $stmt_lineas->execute();
@@ -45,6 +45,33 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
     }
 
+} else {
+    if (isset($_POST['pagar'])) {
+
+
+        $id_usuario = intval($_POST['id_usuario']);
+
+        $sql_totalPedido = "SELECT ID_Pedido, Total FROM Pedido WHERE ID_Usuario = ? AND Estado = 'Carrito'";
+        $stmt_total = $conn->prepare($sql_totalPedido);
+        $stmt_total->bind_param("i", $id_usuario);
+        $stmt_total->execute();
+        $result_total = $stmt_total->get_result();
+        
+        if ($result_total->num_rows > 0) {
+            $pedido = $result_total->fetch_assoc();
+            $total = $pedido['Total'];
+            $id_pedido = $pedido['ID_Pedido'];
+            
+            // Redirigir con el total y el ID del pedido
+            header("Location: detallesPedido.php?total=".$total."&id_pedido=".$id_pedido);
+            exit; // Asegúrate de salir después de redirigir
+        } else {
+            echo "No hay total de pedido en el carrito.";
+        }
+
+       
+
+    }
 }
 
 ?>
@@ -54,10 +81,35 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/css/carrito.css">
+
     <title>Document</title>
+    <style>
+         .boton {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+        }
+        .button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 
 <body>
+<div class="boton">
+        <a href="index.php" class="button">Ir a Inicio</a>
+    </div>
     <h1>Carrito de <?php echo ($usuario["Nombre"]) ?></h1>
     <?php if (empty($lineas_pedido)): ?>
         <p>No tienes artículos en tu carrito.</p>
@@ -80,6 +132,15 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 <?php endforeach; ?>
             </tbody>
         </table>
+        <div style="text-align: center; margin-top: 20px;">
+            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST">
+                <input type="hidden" name="id_usuario" value="<?php echo $id_usuario; ?>">
+                <button type="submit" name="pagar"
+                    style="padding: 10px 20px; background-color: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    Pagar
+                </button>
+            </form>
+        </div>
     <?php endif; ?>
 
 </body>

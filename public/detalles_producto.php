@@ -1,46 +1,71 @@
 <?php
 session_start();
 include("../config/Database.php");
-if ($_SERVER["REQUEST_METHOD"] == "GET") {
+function obtenerProducto($conn, $id_articulo)
+{
+    $sql = "SELECT * FROM Articulo WHERE ID_Articulo = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id_articulo);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc();
+}
 
+if ($_SERVER["REQUEST_METHOD"] == "GET") {
     if (!isset($_SESSION['id_Usuario'])) {
         header('Location: login.php');
-    } else {
-        // Verificar si se recibió el ID del producto
-        if (isset($_GET['id'])) {
-            $id_articulo = intval($_GET['id']); // Asegúrate de que es un número entero
+        exit;
+    }
 
-            // Realizar la consulta para obtener los detalles del producto
-            $sql = "SELECT * FROM Articulo WHERE ID_Articulo = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("i", $id_articulo);
-            $stmt->execute();
-            $result = $stmt->get_result();
+    // Verificar si se recibió el ID del producto
+    if (isset($_GET['id'])) {
+        $id_articulo = intval($_GET['id']); // Asegúrate de que es un número entero
+        $producto = obtenerProducto($conn, $id_articulo); // Obtener los detalles del producto
 
-            // Verificar si se encontró el producto
-            if ($result->num_rows > 0) {
-                $producto = $result->fetch_assoc(); // Obtener los detalles del producto
-            } else {
-                echo "Producto no encontrado.";
-                exit;
-            }
-
-            $stmt->close();
-        } else {
-            echo "ID de producto no especificado.";
+        if (!$producto) {
+            echo "Producto no encontrado.";
             exit;
         }
-
-        $conn->close();
+    } else {
+        echo "ID de producto no especificado.";
+        exit;
     }
 } else {
     function añadirAlcarrito($conn, $id_articulo, $precio, $cantidad, $id_pedido)
     {
 
-        $stmt = $conn->prepare("INSERT INTO Linea_Pedido (Cantidad, Precio_Linea, ID_Pedido, ID_Articulo) VALUES (?,?,?,?)");
-        $stmt->bind_param("idii", $cantidad, $cantidad * $precio, $id_pedido, $id_articulo);
-        return $stmt->execute();
 
+        // Convert precio to a float (or double) if it's a string
+        $precio_linea = floatval($precio);
+        $cantidadInt = intval($cantidad);
+        $precio_total = $cantidadInt * $precio_linea;
+
+
+        // Comprobar si el artículo ya está en la línea de pedido
+        $stmt = $conn->prepare("SELECT ID_Linea_Pedido, Cantidad FROM Linea_Pedido WHERE ID_Articulo = ? AND ID_Pedido = ?");
+        $stmt->bind_param("ii", $id_articulo, $id_pedido);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            // El artículo ya existe, así que actualizamos la cantidad y el total
+            $row = $result->fetch_assoc();
+            $id_linea_pedido = $row['ID_Linea_Pedido'];
+            $cantidad_actual = $row['Cantidad'];
+
+            // Calcular nueva cantidad y precio total
+            $nueva_cantidad = $cantidad_actual + $cantidadInt;
+            $nuevo_precio_total = $nueva_cantidad * $precio_linea;
+
+            // Actualizar la línea de pedido
+            $update_stmt = $conn->prepare("UPDATE Linea_Pedido SET Cantidad = ?, Precio_Linea = ? WHERE ID_Linea_Pedido = ?");
+            $update_stmt->bind_param("idi", $nueva_cantidad, $nuevo_precio_total, $id_linea_pedido);
+            return $update_stmt->execute();
+        } else {
+            // El artículo no existe, así que lo insertamos
+            $stmt = $conn->prepare("INSERT INTO Linea_Pedido (Cantidad, Precio_Linea, ID_Pedido, ID_Articulo) VALUES (?,?,?,?)");
+            $stmt->bind_param("iddi", $cantidadInt, $precio_total, $id_pedido, $id_articulo);
+            return $stmt->execute();
+        }
     }
     if (isset($_POST["añadirAlcarrito"])) {
 
@@ -85,14 +110,17 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         }
 
         if (añadirAlcarrito($conn, $id_articulo, $precio, $cantidad, $id_pedido)) {
+
             echo "Artículo añadido al carrito.";
-            $total = 0;
-            // Preparar la consulta
+
+            $producto_total = floatval($precio) * intval($cantidad);
+
+
             $sql = "SELECT Total 
-                    FROM Pedido 
-                    WHERE ID_Usuario = ? AND Estado = 'Carrito'AND ID_Pedido=$id_pedido";
+            FROM Pedido 
+            WHERE ID_Pedido = ? AND ID_Usuario = ? AND Estado = 'Carrito'";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("i", $_SESSION['id_Usuario']);
+            $stmt->bind_param("ii", $id_pedido, $_SESSION['id_Usuario']);
             $stmt->execute();
             $result = $stmt->get_result();
 
@@ -100,18 +128,28 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
             if ($result->num_rows > 0) {
                 // Obtener el único pedido encontrado
                 $row = $result->fetch_assoc();
-                $total = $row['Total'];
+                $total_actual = $row['Total'];
+            } else {
+                // Manejo de error si no se encuentra el pedido
+                echo "No se encontró el pedido en estado 'Carrito'.";
+                $total_actual = 0; // Asignar 0 si no se encuentra el pedido
             }
 
-            $total += $precio * $cantidad;
+            $nuevo_total = $total_actual + $producto_total;
 
             // Preparar la consulta para actualizar el total del pedido
             $sql = "UPDATE Pedido SET Total = ? WHERE ID_Pedido = ? AND ID_Usuario=? AND Estado='Carrito'";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("di", $total, $id_pedido);
+            $stmt->bind_param("dii", $nuevo_total, $id_pedido, $_SESSION['id_Usuario']);
 
             if ($stmt->execute()) {
                 echo "Total del carrito actualizado exitosamente.";
+                $producto = obtenerProducto($conn, $id_articulo);
+                echo "<script type='text/javascript'>
+                alert('El artículo " . htmlspecialchars($producto['Descripcion']) . " se ha añadido al carrito.');
+                window.close();
+              </script>";
+
             } else {
                 echo "Error al actualizar el total: " . $stmt->error;
             }
@@ -122,6 +160,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         }
 
     }
+
 }
 ?>
 <!DOCTYPE html>
@@ -144,17 +183,21 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     ?>
     <main>
         <div class="producto-detalle">
-            <img src="<?php echo htmlspecialchars($producto['Imagen']); ?>"
-                alt="<?php echo htmlspecialchars($producto['Descripcion']); ?>">
-            <h2><?php echo htmlspecialchars($producto['Descripcion']); ?></h2>
-            <p class="precio">Precio: <?php echo htmlspecialchars($producto['Precio']); ?>€</p>
-            <p><strong>Descripción:</strong> <?php echo htmlspecialchars($producto['Descripcion']); ?></p>
-            <form action="<?php echo ($_SERVER["PHP_SELF"]) ?>" method="POST">
-                <input type="hidden" name="id_articulo" value="<?php echo $producto['ID_Articulo']; ?>">
-                <input type="hidden" name="precio" value="<?php echo $producto['Precio']; ?>">
-                <input type="number" name="cantidad" value="1" min="1">
-                <button type="submit" name="añadirAlcarrito">Agregar al carrito</button>
-            </form>
+            <?php if (isset($producto)): ?>
+                <img src="<?php echo htmlspecialchars($producto['Imagen']); ?>"
+                    alt="<?php echo htmlspecialchars($producto['Descripcion']); ?>">
+                <h2><?php echo htmlspecialchars($producto['Descripcion']); ?></h2>
+                <p class="precio">Precio: <?php echo htmlspecialchars($producto['Precio']); ?>€</p>
+                <p><strong>Descripción:</strong> <?php echo htmlspecialchars($producto['Descripcion']); ?></p>
+                <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST">
+                    <input type="hidden" name="id_articulo" value="<?php echo $producto['ID_Articulo']; ?>">
+                    <input type="hidden" name="precio" value="<?php echo $producto['Precio']; ?>">
+                    <input type="number" name="cantidad" value="1" min="1">
+                    <button type="submit" name="añadirAlcarrito">Agregar al carrito</button>
+                </form>
+            <?php else: ?>
+                <p>No se pudo cargar el producto.</p>
+            <?php endif; ?>
         </div>
     </main>
 </body>

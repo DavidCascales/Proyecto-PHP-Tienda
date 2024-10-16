@@ -165,9 +165,28 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="../assets/css/indexAdmin.css">
+    <style>
+        .back-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 10px 15px;
+            background-color: #007BFF; /* Cambia el color según tu diseño */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .back-button:hover {
+            background-color: #0056b3; /* Cambia el color al pasar el ratón */
+        }
+    </style>
 </head>
 
 <body>
+
+<button class="back-button" onclick="window.location.href='../public/index.php'">Volver</button>
+
     <?php include("../includes/headerAdmin.php");
     include("../includes/navbar.php"); ?>
 
