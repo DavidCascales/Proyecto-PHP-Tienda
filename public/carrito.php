@@ -56,21 +56,56 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         $stmt_total->bind_param("i", $id_usuario);
         $stmt_total->execute();
         $result_total = $stmt_total->get_result();
-        
+
         if ($result_total->num_rows > 0) {
             $pedido = $result_total->fetch_assoc();
             $total = $pedido['Total'];
             $id_pedido = $pedido['ID_Pedido'];
-            
+
             // Redirigir con el total y el ID del pedido
-            header("Location: detallesPedido.php?total=".$total."&id_pedido=".$id_pedido);
+            header("Location: detallesPedido.php?total=" . $total . "&id_pedido=" . $id_pedido);
             exit; // Asegúrate de salir después de redirigir
         } else {
             echo "No hay total de pedido en el carrito.";
         }
 
-       
 
+
+    } elseif (isset($_POST['eliminar'])) {
+
+        $id_linea_pedido = intval($_POST['id_linea_pedido']);
+
+
+        // Obtener el ID del pedido para actualizar el total
+        $sql_get_pedido = "SELECT p.ID_Pedido, lp.Precio_Linea FROM Linea_Pedido lp JOIN Pedido p ON lp.ID_Pedido = p.ID_Pedido WHERE lp.ID_Linea_Pedido = ?";
+        $stmt_get_pedido = $conn->prepare($sql_get_pedido);
+        $stmt_get_pedido->bind_param("i", $id_linea_pedido);
+        $stmt_get_pedido->execute();
+        $result_get_pedido = $stmt_get_pedido->get_result();
+
+
+        if ($result_get_pedido->num_rows > 0) {
+            $pedido_info = $result_get_pedido->fetch_assoc();
+            $id_pedido = $pedido_info['ID_Pedido'];
+            $precio_linea = $pedido_info['Precio_Linea'];
+
+            // Eliminar la línea de pedido
+            $sql_eliminar = "DELETE FROM Linea_Pedido WHERE ID_Linea_Pedido = ?";
+            $stmt_eliminar = $conn->prepare($sql_eliminar);
+            $stmt_eliminar->bind_param("i", $id_linea_pedido);
+            $stmt_eliminar->execute();
+            $stmt_eliminar->close();
+
+            // Actualizar el total del pedido
+            $sql_update_total = "UPDATE Pedido SET Total = Total - ? WHERE ID_Pedido = ?";
+            $stmt_update_total = $conn->prepare($sql_update_total);
+            $stmt_update_total->bind_param("di", $precio_linea, $id_pedido);
+            $stmt_update_total->execute();
+            $stmt_update_total->close();
+        }
+
+        // Redirigir a la misma página para ver el carrito actualizado
+        header("Location: " . $_SERVER['PHP_SELF']);
     }
 }
 
@@ -85,12 +120,13 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
     <title>Document</title>
     <style>
-         .boton {
+        .boton {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 10px;
         }
+
         .button {
             padding: 10px 20px;
             background-color: #007bff;
@@ -100,6 +136,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
             cursor: pointer;
             text-decoration: none;
         }
+
         .button:hover {
             background-color: #0056b3;
         }
@@ -107,7 +144,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 </head>
 
 <body>
-<div class="boton">
+    <div class="boton">
         <a href="index.php" class="button">Ir a Inicio</a>
     </div>
     <h1>Carrito de <?php echo ($usuario["Nombre"]) ?></h1>
@@ -120,6 +157,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                     <th>Artículo</th>
                     <th>Cantidad</th>
                     <th>Precio</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -128,6 +166,14 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         <td><?php echo htmlspecialchars($linea['Descripcion']); ?></td>
                         <td><?php echo htmlspecialchars($linea['Cantidad']); ?></td>
                         <td><?php echo htmlspecialchars($linea['Precio_Linea']); ?>€</td>
+                        <td>
+                            <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST"
+                                style="display:inline;">
+                                <input type="hidden" name="id_linea_pedido" value="<?php echo $linea['ID_Linea_Pedido']; ?>">
+                                <button type="submit" name="eliminar"
+                                    style="background-color: red; color: white; border: none; border-radius: 5px; cursor: pointer; padding: 5px 10px;">Eliminar</button>
+                            </form>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
