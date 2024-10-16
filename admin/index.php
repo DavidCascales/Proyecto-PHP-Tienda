@@ -117,14 +117,28 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     // Manejar añadir artículos
     if (isset($_POST['add_articulo'])) {
         $articulo_descripcion = $_POST['articulo_descripcion'];
-        $articulo_imagen = $_POST['articulo_imagen'];
+        
         $id_categoria = $_POST['id_categoria'];
         $articulo_precio = $_POST['articulo_precio'];
 
-        if (añadirArticulo($conn, $articulo_descripcion, $articulo_imagen, $articulo_precio, $id_categoria)) {
-            echo "Artículo añadido correctamente.";
+        // Procesar la imagen subida
+        if (isset($_FILES['articulo_imagen']) && $_FILES['articulo_imagen']['error'] === UPLOAD_ERR_OK) {
+            $nombreArchivo = $_FILES['articulo_imagen']['name'];
+            $rutaTemporal = $_FILES['articulo_imagen']['tmp_name'];
+            $imagenRuta = "../assets/images/" . basename($nombreArchivo);
+
+            // Mover el archivo subido a la carpeta correspondiente
+            if (move_uploaded_file($rutaTemporal, $imagenRuta)) {
+                if (añadirArticulo($conn, $articulo_descripcion, $nombreArchivo, $articulo_precio, $id_categoria)) {
+                    echo "Artículo añadido correctamente.";
+                } else {
+                    echo "Error al añadir el artículo.";
+                }
+            } else {
+                echo "Error al mover la imagen.";
+            }
         } else {
-            echo "Error al añadir el artículo.";
+            echo "Error al subir la imagen.";
         }
     }
     // Manejar añadir categorías
@@ -141,13 +155,13 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     // Manejar editar artículos
     if (isset($_POST['editar_articulo'])) {
         $id_articulo = $_POST['id_articulo'];
-        header("Location:productoEdit.php?id_articulo=". $id_articulo);
+        header("Location:productoEdit.php?id_articulo=" . $id_articulo);
     }
 
-     // Manejar editar categoria
-     if (isset($_POST['editar_categoria'])) {
+    // Manejar editar categoria
+    if (isset($_POST['editar_categoria'])) {
         $id_categoria = $_POST['id_categoria'];
-        header("Location:categoriaEdit.php?id_categoria=". $id_categoria);
+        header("Location:categoriaEdit.php?id_categoria=" . $id_categoria);
     }
 
 
@@ -171,21 +185,24 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
             top: 10px;
             left: 10px;
             padding: 10px 15px;
-            background-color: #007BFF; /* Cambia el color según tu diseño */
+            background-color: #007BFF;
+            /* Cambia el color según tu diseño */
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
         }
+
         .back-button:hover {
-            background-color: #0056b3; /* Cambia el color al pasar el ratón */
+            background-color: #0056b3;
+            /* Cambia el color al pasar el ratón */
         }
     </style>
 </head>
 
 <body>
 
-<button class="back-button" onclick="window.location.href='../public/index.php'">Volver</button>
+    <button class="back-button" onclick="window.location.href='../public/index.php'">Volver</button>
 
     <?php include("../includes/headerAdmin.php");
     include("../includes/navbar.php"); ?>
@@ -212,9 +229,9 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
             </ul>
 
             <h2>Añadir Artículo</h2>
-            <form method="POST">
+            <form method="POST" enctype="multipart/form-data">
                 <input type="text" name="articulo_descripcion" placeholder="Descripción del Artículo" required>
-                <input type="text" name="articulo_imagen" placeholder="URL de la Imagen" required>
+                <input type="file" name="articulo_imagen" accept="image/*" required>
                 <input type="number" step="0.01" name="articulo_precio" placeholder="Precio" required>
                 <label for="categoria">Seleccionar Categoría:</label>
                 <select name="id_categoria" id="categoria" required>
@@ -244,7 +261,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                         <form action="<?php echo ($_SERVER["PHP_SELF"]) ?>" method="POST" style="display:inline;">
                             <input type="hidden" name="id_categoria" value="<?php echo $row['ID_Categoria']; ?>">
                             <button type="submit" name="editar_categoria"
-                            onclick="return confirm('¿Estás seguro de que deseas editar esta categoria?');">Editar</button>
+                                onclick="return confirm('¿Estás seguro de que deseas editar esta categoria?');">Editar</button>
                             <button type="submit" name="delete_categoria"
                                 onclick="return confirm('¿Estás seguro de que deseas eliminar esta categoría?');">Eliminar</button>
                         </form>

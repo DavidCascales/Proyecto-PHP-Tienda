@@ -10,31 +10,51 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     if (!isset($_SESSION['id_Usuario'])) {
         header('Location: login.php');
     } else {
-        // Realizar la consulta
+
+        // Inicializar la consulta base
         $sql = "SELECT Articulo.ID_Articulo, Articulo.Imagen, Articulo.Descripcion AS ArticuloDescripcion, 
-                       Categoria.Descripcion AS CategoriaDescripcion, Articulo.Precio
-                FROM Articulo
-                LEFT JOIN ArticuloCategoria ON Articulo.ID_Articulo = ArticuloCategoria.ID_Articulo
-                LEFT JOIN Categoria ON ArticuloCategoria.ID_Categoria = Categoria.ID_Categoria;"; // Cambia "tu_tabla" según tu necesidad
-        
-        $result = $conn->query($sql);
+    Categoria.Descripcion AS CategoriaDescripcion, Articulo.Precio
+               FROM Articulo
+           LEFT JOIN ArticuloCategoria ON Articulo.ID_Articulo = ArticuloCategoria.ID_Articulo
+           LEFT JOIN Categoria ON ArticuloCategoria.ID_Categoria = Categoria.ID_Categoria";
+
+        // Comprobar si hay un término de búsqueda
+        if (isset($_GET['buscar']) && !empty(trim($_GET['buscar']))) {
+            $buscar = trim($_GET['buscar']);
+            $sql .= " WHERE Articulo.Descripcion LIKE ? OR Categoria.Descripcion LIKE ?";
+        }
+
+        $stmt = $conn->prepare($sql);
+
+        // Si hay un término de búsqueda, se usa en la consulta
+        if (isset($buscar)) {
+            $likeBuscar = "%" . $buscar . "%";
+            $stmt->bind_param("ss", $likeBuscar, $likeBuscar);
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
 
         // Inicializar el array para almacenar los resultados
         $arrayResultados = [];
 
         if ($result->num_rows > 0) {
-            // Volcar los resultados en el array
             while ($row = $result->fetch_assoc()) {
-                $arrayResultados[] = $row; // Agrega cada fila al array
+                $arrayResultados[] = $row;
             }
         } else {
             echo "0 resultados";
         }
-
-        $conn->close();
+        $stmt->close();
+       
     }
+    
 }
 
+
+
+
+ $conn->close();
 
 
 ?>
@@ -53,6 +73,10 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
             window.open(url, '_blank');
 
         }
+        function LimpiarFiltro() {
+            // Redirigir a la misma página sin parámetros de búsqueda
+            window.location.href = "<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>";
+        }
     </script>
 </head>
 
@@ -62,14 +86,22 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     include("../includes/navbar.php");
     ?>
     <main>
+        <form method="GET" class="buscador-form" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
+            <input type="text" class="buscador-input" name="buscar" placeholder="Buscar por descripción o categoría" required>
+            <button type="submit"class="buscador-button">Buscar</button>
+            <button type="button"class="buscador-button" onclick="LimpiarFiltro()">Limpiar</button>
+        </form>
         <div id="productos">
             <?php foreach ($arrayResultados as $item): ?>
                 <div class="producto" onclick="abrirDetalle(<?php echo $item['ID_Articulo']; ?>)">
                     <img src=<?php echo htmlspecialchars($item['Imagen']); ?>>
-                    <h2><?php echo htmlspecialchars($item['ArticuloDescripcion']); ?></h2> <!-- Cambia 'nombre' según tu columna -->
-                    <p>Categoria: <?php if ($item['CategoriaDescripcion']==null) {
+                    <h2><?php echo htmlspecialchars($item['ArticuloDescripcion']); ?></h2>
+                    <!-- Cambia 'nombre' según tu columna -->
+                    <p>Categoria: <?php if ($item['CategoriaDescripcion'] == null) {
                         echo "Sin categoria";
-                    }  else{echo htmlspecialchars($item['CategoriaDescripcion']);}?></p>
+                    } else {
+                        echo htmlspecialchars($item['CategoriaDescripcion']);
+                    } ?></p>
                     <p><?php echo htmlspecialchars($item['Precio']); ?>€</p> <!-- Cambia 'descripcion' según tu columna -->
 
                 </div>

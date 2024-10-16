@@ -1,10 +1,8 @@
 html,
 body {
     margin: 0;
-
+    padding: 0;
 }
-
-
 
 body {
     font-family: Arial, sans-serif;
@@ -12,65 +10,86 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-
 }
-/*
-header {
-     background: #35424a;
-    color: #ffffff;
-    padding: 10px 0;
-    text-align: center; 
-    background: #35424a; color: #ffffff; padding: 10px 0; position: relative;
-}*/
 
+/* Formulario del buscador */
+.buscador-form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.buscador-input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 300px;
+    margin-right: 10px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.buscador-input:focus {
+    border-color: #007BFF;
+    outline: none;
+}
+
+.buscador-button {
+    padding: 10px 15px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.buscador-button:hover {
+    background-color: #0056b3;
+}
+
+/* Productos */
 #productos {
     display: flex;
     justify-content: flex-start;
     flex-wrap: wrap;
     margin: 20px 0;
     padding: 20px;
-    height: fit-content;
 }
 
 .producto {
     background: #ffffff;
     border: 1px solid #dddddd;
     padding: 10px;
-
-    width: calc(33.33% - 20px);
-    /* Mantiene el ancho para 3 productos en una fila */
+    width: calc(33.33% - 20px); /* 3 productos en una fila */
     text-align: center;
     margin: 10px;
-    /* Espacio entre filas */
     box-sizing: border-box;
-    /* Asegura que el padding se incluya en el ancho */
-    transition: transform 0.3s, box-shadow 0.3s; /* Suaviza la transición */
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .producto img {
     max-width: 100%;
-    /* Asegura que la imagen no exceda el ancho de su contenedor */
     height: auto;
-    /* Mantiene la proporción de la imagen */
     max-height: 200px;
-    /* Ajusta la altura máxima según lo necesites */
     object-fit: cover;
 }
 
 .producto:hover {
     transform: scale(1.05);
-    /* Aumenta el tamaño al pasar el ratón */
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    /* Añade una sombra */
 }
 
+/* Estilo del contenedor principal */
 main {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
 }
 
-
+/* Navegación */
 nav {
     background: rgb(212, 233, 247);
     padding: 10px 0;
@@ -83,13 +102,10 @@ nav ul {
     margin: 0;
     display: flex;
     justify-content: center;
-
-
 }
 
 nav ul li {
-
-    margin: 0 150px;
+    margin: 0 30px; /* Ajustar el espaciado entre los elementos */
 }
 
 nav ul li a {
