@@ -131,7 +131,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $calle = $_POST["calle"];
             $dni = $_POST["dni"];
 
-            $mensaje = "usuario" . $_POST["mail"] . "creado con éxito";
+            $mensaje = "Usuario" . $_POST["mail"] . " creado con éxito, se le ha enviado un correo.";
 
             try {
                 // Ejecutar la consulta
@@ -144,26 +144,63 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $mail = new PHPMailer(true);
 
                 try {
-                    
-                    
+
+
                     $mail->isSMTP();
                     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
                     $mail->Host = "smtp.gmail.com";
                     $mail->SMTPAuth = true;
-                    $mail->Port=465;
+                    $mail->Port = 465;
                     $mail->Username = "intentoaprobar@gmail.com";
                     $mail->Password = "jhgl eire jouo oxxs";
                     $mail->setFrom("intentoaprobar@gmail.com");
-                    $mail->addAddress( $_POST["mail"]);
+                    $mail->addAddress($_POST["mail"]);
                     //Content
                     $mail->isHTML(true);                                  //Set email format to HTML
-                    $mail->Subject = 'Creación de usuario';
-                    $mail->Body = '<html><h1>usuario creado con exito</h1></html>';
+                    $mail->Subject = 'Creacion de usuario';
+                    $mail->Body = '<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Exitoso</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        p {
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>¡Registro Exitoso!</h1>
+        <p>Gracias por registrarte en nuestra página. Ya puedes empezar a disfrutar de nuestros servicios.</p>
+    </div>
+</body>
+</html>';
                     $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
-                    
+
 
                     $mail->send();
-                
+
 
                 } catch (Exception $e) {
                     echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";

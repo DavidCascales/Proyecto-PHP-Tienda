@@ -192,7 +192,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST">
                     <input type="hidden" name="id_articulo" value="<?php echo $producto['ID_Articulo']; ?>">
                     <input type="hidden" name="precio" value="<?php echo $producto['Precio']; ?>">
-                    <input type="number" name="cantidad" value="1" min="1">
+                    <input type="number" name="cantidad" value="1" min="1" class="cantidad-input">
                     <button type="submit" name="añadirAlcarrito">Agregar al carrito</button>
                 </form>
             <?php else: ?>
