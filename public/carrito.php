@@ -85,6 +85,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
 
 
         if ($result_get_pedido->num_rows > 0) {
+            
             $pedido_info = $result_get_pedido->fetch_assoc();
             $id_pedido = $pedido_info['ID_Pedido'];
             $precio_linea = $pedido_info['Precio_Linea'];
