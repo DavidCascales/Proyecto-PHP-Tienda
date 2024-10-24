@@ -176,6 +176,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         }
         
         $rol = $_POST['rol'];
+        
 
         // Determina el valor de rol para la consulta
         $rolquery = ($rol == "usuario") ? "usuario" : "administrador";
