@@ -2,7 +2,9 @@
 session_start();
 include("../config/Database.php");
 
+
 if ($_SERVER["REQUEST_METHOD"] == "GET") {
+
 
     if (!isset($_SESSION['id_Usuario'])) {
         header('Location: login.php');
@@ -117,7 +119,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
     // Manejar añadir artículos
     if (isset($_POST['add_articulo'])) {
         $articulo_descripcion = $_POST['articulo_descripcion'];
-        
+
         $id_categoria = $_POST['id_categoria'];
         $articulo_precio = $_POST['articulo_precio'];
 
@@ -150,6 +152,51 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
             echo "Error al añadir la categoría.";
         }
     }
+
+    // Manejar cambiar rol
+    if (isset($_POST['cambiarRol'])) {
+
+        
+
+        $id_usuario = $_POST['id_usuario'];
+
+        
+        $sql = "SELECT * FROM Usuario WHERE ID_Usuario = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $id_usuario);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+
+        if ($result->num_rows > 0) {
+            $usuario = $result->fetch_assoc();
+        } else {
+            echo "Usuario no encontrado.";
+            exit;
+        }
+        
+        $rol = $_POST['rol'];
+
+        // Determina el valor de rol para la consulta
+        $rolquery = ($rol == "usuario") ? "usuario" : "administrador";
+
+        if ($rol == "usuario" || $rol == "administrador") {
+            // Preparar la consulta para actualizar el artículo
+            $sql = "UPDATE usuario SET rol = ? WHERE ID_usuario = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("si", $rolquery , $id_usuario);
+
+            // Ejecutar la consulta
+            if ($stmt->execute()) {
+                echo "<script>alert('Usuario " . $usuario["Nombre"] . " ha cambiado al rol " . $rolquery . ".');</script>";
+            } else {
+                echo "<script>alert('Error al actualizar la categoria: " . addslashes($stmt->error) . "');</script>";
+            }
+        }
+
+    }
+
+
 
 
     // Manejar editar artículos
@@ -198,6 +245,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
             /* Cambia el color al pasar el ratón */
         }
     </style>
+
 </head>
 
 <body>
@@ -274,6 +322,40 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
                 <input type="text" name="categoria_descripcion" placeholder="Descripción de la Categoría" required>
                 <button type="submit" name="add_categoria">Añadir Categoría</button>
             </form>
+        </div>
+
+        <div class="section">
+            <h2>Lista de Usuarios</h2>
+            <ul>
+
+                <?php $result = $conn->query("SELECT * FROM Usuario");
+                while ($row = $result->fetch_assoc()): ?>
+                    <li>
+                        <?php echo $row['Nombre'] . " - " . $row['Email']; ?>
+
+
+                        <form action="<?php echo ($_SERVER["PHP_SELF"]) ?>" method="POST" style="display:inline;">
+
+                            <input type="hidden" name="id_usuario" value="<?php echo $row['ID_Usuario']; ?>">
+                            <select name="rol" onchange="mostrarBoton(this)">
+                                <option value="usuario" <?php echo ($row['Rol'] == 'usuario') ? 'selected' : ''; ?>>Usuario
+                                </option>
+                                <option value="administrador" <?php echo ($row['Rol'] == 'administrador') ? 'selected' : ''; ?>>Administrador</option>
+                            </select>
+                            <!-- Botón de envío oculto por defecto -->
+                            <button type="submit" name="cambiarRol" style="display: none;"
+                                class="submit-btn">Enviar</button>
+                        </form>
+                    </li>
+                <?php endwhile; ?>
+                <script>
+                    function mostrarBoton(selectElement) {
+                        // Muestra el botón de envío correspondiente
+                        const submitButton = selectElement.form.querySelector('.submit-btn');
+                        submitButton.style.display = 'inline'; // Cambia a inline o block según lo necesites
+                    }
+                </script>
+            </ul>
         </div>
     </div>
 
