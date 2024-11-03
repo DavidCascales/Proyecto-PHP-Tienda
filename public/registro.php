@@ -131,7 +131,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $calle = $_POST["calle"];
             $dni = $_POST["dni"];
 
-            $mensaje = "Usuario" . $_POST["mail"] . " creado con éxito, se le ha enviado un correo.";
+            $mensaje = "Usuario: " . $_POST["mail"] . " creado con éxito, se le ha enviado un correo.";
 
             try {
                 // Ejecutar la consulta
@@ -166,33 +166,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>Registro Exitoso</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        h1 {
-            color: #4CAF50;
-        }
-        p {
-            color: #555;
-        }
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+    }
+    .container {
+        background: white;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+        color: #4CAF50;
+    }
+    p {
+        color: #555;
+    }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>¡Registro Exitoso!</h1>
-        <p>Gracias por registrarte en nuestra página. Ya puedes empezar a disfrutar de nuestros servicios.</p>
+        <p>Gracias por registrarte en Tu Armario Virtual. 
+        Ya puedes empezar a disfrutar de nuestros servicios.</p>
     </div>
 </body>
 </html>';
